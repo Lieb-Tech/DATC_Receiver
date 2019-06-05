@@ -1,0 +1,10 @@
+cosmosDbKey.json
+eventHub.json
+mongo.json
+
+*.lock
+
+**/.vs
+**/bin
+**/obj
+**/PublishProfiles
