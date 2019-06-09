@@ -22,7 +22,8 @@ namespace DATC_Receiver.Tests
             var cdb = new CosmosDB();
             var save = ActorOf(CosmosSaveActor.Props(cdb));
             var icao = ActorOf<ICAOLookupActor>();
-            var a = ActorOf(FlightActor.Props(save, "123", icao));
+            var a = ActorOf(FlightActor.Props());
+            a.Tell(new FlightActor.FlightActorInit(save, "123", icao), TestActor);
             ExpectNoMsg(TimeSpan.FromSeconds(5));
         }
 
@@ -35,7 +36,8 @@ namespace DATC_Receiver.Tests
             var save = ActorOf(CosmosSaveActor.Props(cdb));
             var icao = ActorOf<ICAOLookupActor>();
 
-            var a = ActorOf(FlightActor.Props(save, "TEST", icao));
+            var a = ActorOf(FlightActor.Props());
+            a.Tell(new FlightActor.FlightActorInit(save, "TEST", icao), TestActor);
             Watch(a);
             a.Tell(new FlightActor.FlightDataRequest()
             {
@@ -63,7 +65,9 @@ namespace DATC_Receiver.Tests
             var tf = info.aircraft.First(z => z.flight != null);            
             var str = "activeSnap:" + tf.flight.Trim();
 
-            var a = ActorOf(FlightActor.Props(save, tf.flight, icao));
+            var a = ActorOf(FlightActor.Props());
+            a.Tell(new FlightActor.FlightActorInit(save, tf.flight, icao), TestActor);
+
             a.Tell(new FlightActor.FlightDataRequest()
             {
                 deviceId = info.deviceId,
@@ -100,9 +104,10 @@ namespace DATC_Receiver.Tests
             FlightData fd = dr.aircraft.First(z =>  z.flight != null && z.flight.Trim() == "JBU238");
 
             var flight = fd.flight.Trim();
-            var str = "activeSnap:" + flight.Trim();            
+            var str = "activeSnap:" + flight.Trim();
 
-            var a = ActorOf(FlightActor.Props(save, flight.Trim(), icao));
+            var a = ActorOf(FlightActor.Props());
+            a.Tell(new FlightActor.FlightActorInit(save, flight.Trim(), icao), TestActor);
 
             System.Threading.Thread.Sleep(1000);
 

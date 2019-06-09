@@ -8,25 +8,19 @@ using System.Text;
 
 namespace DATC_Receiver.Actors
 {
-    class FlightActor : ReceiveActor
+    class FlightActor_WithProps : ReceiveActor
     {
         IActorRef icaoLookup;
-        IActorRef dataSaver;
         string flightID;
         FlightDataSnapshotArchive snaps;
         FlightDataSnapshot currentSnapshot;
 
-        public FlightActor()
+        public FlightActor_WithProps(IActorRef saver, string id, IActorRef icao)
         {
+            flightID = id.Trim();
+            icaoLookup = icao;
             snaps = new FlightDataSnapshotArchive();
 
-            Receive<FlightActorInit>(r =>
-            {
-                flightID = r.flightId.Trim();
-                icaoLookup = r.icao;
-                dataSaver = r.saver;
-            });
-            
             // if a common aircraft, then more details in here
             Receive<ICAOLookupActor.AircraftResponse>(r =>
             {
@@ -41,7 +35,7 @@ namespace DATC_Receiver.Actors
                 if (snaps.icaoData != null)
                 {
                     if (!string.IsNullOrWhiteSpace(snaps.icaoData.t))
-                        icaoLookup.Tell(new ICAOLookupActor.AircraftRequest(r.ICAOData.t));
+                        icao.Tell(new ICAOLookupActor.AircraftRequest(r.ICAOData.t));
                 }
             });
 
@@ -50,7 +44,7 @@ namespace DATC_Receiver.Actors
             {
                 if (string.IsNullOrWhiteSpace(snaps.hex))
                 {
-                    icaoLookup.Tell(new ICAOLookupActor.HexRequest(r.flightData.hex));
+                    icao.Tell(new ICAOLookupActor.HexRequest(r.flightData.hex));
                 }
 
                 // ensure that current reading is newer than previous
@@ -71,9 +65,9 @@ namespace DATC_Receiver.Actors
 
                 // only update status if this is newer than previous
                 if (!isOutOrder)
-                {                    
-                    dataSaver.Tell(new CosmosSaveActor.SaveRequest(currentSnapshot, "flights"));
-                }                
+                {
+                    saver.Tell(new CosmosSaveActor.SaveRequest(currentSnapshot, "flights"));
+                }
 
                 // full object info - incase web user wants to see 
                 var ex = new FlightDataExtended(r.flightData)
@@ -83,12 +77,13 @@ namespace DATC_Receiver.Actors
                     icoaAircraft = snaps.icaoAircraft,
                     icoaData = snaps.icaoData,
                 };
-                dataSaver.Tell(new CosmosSaveActor.SaveRequest(ex, "flights"));
+                saver.Tell(new CosmosSaveActor.SaveRequest(ex, "flights"));
             });
-        }        
-        
-        public static Props Props() => Akka.Actor.Props.Create(() => new FlightActor());
-        
+        }
+
+        public static Props Props(IActorRef saver, string flightID, IActorRef icao) =>
+           Akka.Actor.Props.Create(() => new FlightActor_WithProps(saver, flightID, icao));
+
 
         private void buildSnapshot(double now, FlightData entry)
         {
@@ -131,21 +126,8 @@ namespace DATC_Receiver.Actors
             }
         }
 
-        internal class FlightActorInit
-        {
-            public FlightActorInit(IActorRef saveActor, string flight, IActorRef icaoActor )
-            {
-                saver = saveActor;
-                flightId = flight;
-                icao = icaoActor;
-            }
-            public IActorRef saver { get; private set; }
-            public string flightId { get; private set; }
-            public IActorRef icao { get; private set; }
-        }
-
         internal class FlightDataRequest
-        {           
+        {
             public FlightData flightData { get; set; }
             public string deviceId { get; set; }
             public double now { get; set; }

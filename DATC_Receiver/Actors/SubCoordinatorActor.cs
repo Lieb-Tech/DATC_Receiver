@@ -44,7 +44,10 @@ namespace DATC_Receiver.Actors
                     if (!flightActors.ContainsKey(dr.flight))
                     {
                         var cos = Context.ActorOf(CosmosSaveActor.Props(cdb));
-                        flightActors.Add(dr.flight, Context.ActorOf(FlightActor.Props(cos, dr.flight, icao)));
+                        // flightActors.Add(dr.flight, Context.ActorOf(FlightActor.Props(cos, dr.flight, icao)));
+
+                        flightActors.Add(dr.flight, Context.ActorOf(FlightActor.Props()));
+                        flightActors[dr.flight].Tell(new FlightActor.FlightActorInit(cos, dr.flight, icao));
                         flightExpiry.Add(dr.flight, DateTime.Now);
                     }
 
@@ -59,7 +62,9 @@ namespace DATC_Receiver.Actors
             Receive<ExpireActors>(r =>
             {
                 // get idle processor list
-                var toCleanup = flightExpiry.Where(z => z.Value.AddHours(1) < DateTime.Now).Select(z => z.Key).ToList();
+                var toCleanup = flightExpiry
+                                    .Where(z => z.Value.AddHours(1) < DateTime.Now)
+                                    .Select(z => z.Key).ToList();
                 foreach (var t in toCleanup)
                 {
                     // shut down the actor
