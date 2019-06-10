@@ -8,6 +8,9 @@ using System.Text;
 
 namespace DATC_Receiver.Actors
 {
+    /// <summary>
+    /// Process just one 1 flight code
+    /// </summary>
     class FlightActor : ReceiveActor
     {
         IActorRef icaoLookup;

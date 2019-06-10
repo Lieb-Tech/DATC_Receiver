@@ -8,6 +8,9 @@ using System.Text;
 
 namespace DATC_Receiver
 {
+    /// <summary>
+    ///  Event hub manager 
+    /// </summary>
     class EventHubService
     {
         private string StorageConnectionString = "";

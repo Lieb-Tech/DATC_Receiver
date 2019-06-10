@@ -56,7 +56,7 @@ namespace DATC_Receiver.Actors
                     // update timestamp
                     flightExpiry[dr.flight] = DateTime.Now;
                 }
-            });
+            });            
 
             // clear out actors that haven't recently processed a message
             Receive<ExpireActors>(r =>

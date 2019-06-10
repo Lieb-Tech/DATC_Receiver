@@ -10,6 +10,9 @@ using Newtonsoft.Json;
 
 namespace DATC_Receiver
 {
+    /// <summary>
+    /// Process event hub events 
+    /// </summary>
     internal class EventHubReceiver : IEventProcessor
     {
         public EventHubReceiver()
@@ -45,7 +48,7 @@ namespace DATC_Receiver
                 var info = JsonConvert.DeserializeObject<DeviceReading>(data);
 
                 // send off to sub coordinator to process
-                Program.subCoord.Tell(info);
+                Program.tower.Tell(info);
 
                 Console.WriteLine($"partId: {context.PartitionId} - entries: {info.aircraft.Count}");
             }
